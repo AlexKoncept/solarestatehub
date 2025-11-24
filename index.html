@@ -117,13 +117,7 @@
 
   <div class="stars"></div>
 
-  <div class="absolute top-4 left-4 z-40 pointer-events-none">
-    <h1 class="text-lg md:text-xl font-bold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 drop-shadow-lg">
-      SolarEstate<span class="font-light text-white">Hub</span>
-      <span class="text-xs md:text-sm text-slate-300 font-normal normal-case tracking-normal ml-2">– Choisissez votre planète</span>
-    </h1>
-  </div>
-
+  <!-- Floating UI Controls (Boutons en haut à droite) -->
   <div class="absolute top-4 right-4 z-40 flex gap-2 pointer-events-auto">
     <div class="flex bg-slate-900/80 backdrop-blur rounded-full p-1 border border-slate-700 shadow-lg">
       <button id="lang-fr" class="w-8 h-8 rounded-full bg-slate-600 text-white text-xs hover:bg-cyan-600 transition font-bold">FR</button>
@@ -135,22 +129,36 @@
     </button>
   </div>
 
+  <!-- Titre (Déplacé sous les boutons, aligné à droite) -->
+  <div class="absolute top-20 right-4 z-40 pointer-events-none text-right">
+    <h1 class="text-lg md:text-xl font-bold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 drop-shadow-lg">
+      SolarEstate<span class="font-light text-white">Hub</span>
+      <span id="subtitle-text" class="text-xs md:text-sm text-slate-300 font-normal normal-case tracking-normal block md:inline md:ml-2">– Choisissez votre planète</span>
+    </h1>
+  </div>
 
+  <!-- Main Content Area -->
   <main class="flex-1 relative flex overflow-hidden">
     
+    <!-- Solar System Map Area -->
     <div id="solar-system-container" class="flex-1 relative flex items-center justify-center w-full h-full">
       
+      <!-- HUD Coordinates (Bottom Left on mobile, Top Left under logo on desktop) -->
       <div class="absolute bottom-4 left-4 md:top-12 md:left-4 z-10 pointer-events-none opacity-60">
         <div class="text-[10px] text-cyan-500 font-mono mb-1">COORDINATES</div>
         <div id="coords" class="text-xs md:text-sm font-mono text-white">X: 0.00 Y: 0.00</div>
       </div>
 
+      <!-- Footer Credit -->
       <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
         <span class="text-[10px] text-slate-500 font-mono opacity-70">by Alex Koncept</span>
       </div>
 
+      <!-- The System (Responsive Container) -->
+      <!-- Utilisation de vmin pour s'adapter à l'orientation portrait ou paysage -->
       <div class="relative w-[95vmin] h-[95vmin] md:w-[85vmin] md:h-[85vmin] max-w-[800px] max-h-[800px] flex items-center justify-center transition-transform duration-500 select-none" id="galaxy-wrapper">
         
+        <!-- Orbites (En pourcentage pour le responsive) -->
         <div class="orbit-path w-[22%] h-[22%]"></div> <!-- Mercure -->
         <div class="orbit-path w-[32%] h-[32%]"></div> <!-- Venus -->
         <div class="orbit-path w-[45%] h-[45%]"></div> <!-- Terre -->
@@ -158,8 +166,11 @@
         <div class="orbit-path w-[75%] h-[75%]"></div> <!-- Jupiter -->
         <div class="orbit-path w-[93%] h-[93%]"></div> <!-- Saturne -->
         
+        <!-- Soleil -->
         <div class="absolute z-20 w-[12%] h-[12%] rounded-full p-sun cursor-pointer hover:scale-105 transition" onclick="selectPlanet('sun')"></div>
 
+        <!-- Planètes -->
+        <!-- Tailles fixes en rem/px pour rester cliquable sur mobile, positions en % -->
         
         <div class="absolute w-6 h-6 md:w-8 md:h-8 planet-body p-mercury z-30" style="top: 42%; left: 42%;" onclick="selectPlanet('mercury')"></div>
         <div class="absolute w-8 h-8 md:w-10 md:h-10 planet-body p-venus z-30" style="top: 35%; left: 55%;" onclick="selectPlanet('venus')"></div>
@@ -173,6 +184,8 @@
       </div>
     </div>
 
+    <!-- Info Panel (Sidebar responsive) -->
+    <!-- Sur mobile : w-full. Sur desktop : w-96 -->
     <aside id="info-panel" class="glass-panel bg-slate-900/95 backdrop-blur-xl border-l border-slate-700 absolute right-0 top-0 h-full w-full md:w-96 transform translate-x-full transition-transform duration-300 z-50 flex flex-col shadow-2xl">
       <div class="p-6 flex-1 overflow-y-auto">
         <div class="flex justify-between items-start mb-6">
@@ -223,6 +236,7 @@
   </main>
 
   <script>
+
     const db = {
       fr: {
         sun: { name: "Le Soleil", temp: "5,505°C", gravity: "274 m/s²", desc: "La source d'énergie ultime. Parfait pour une Sphère de Dyson. Attention aux coups de soleil.", type: "p-sun", features: ["Énergie infinie", "Vue centrale", "Chauffage inclus"], link: "https://fr.wikipedia.org/wiki/Soleil" },
@@ -251,7 +265,6 @@
     let currentLang = 'fr';
     let currentTheme = 'dark';
 
-    // DOM Elements
     const panel = document.getElementById('info-panel');
     const closePanelBtn = document.getElementById('close-panel');
     const themeToggle = document.getElementById('theme-toggle');
@@ -259,10 +272,13 @@
     const langEn = document.getElementById('lang-en');
     const coordsDisplay = document.getElementById('coords');
     const acquireLink = document.getElementById('acquire-link');
+    const subtitleText = document.getElementById('subtitle-text');
+
 
     function selectPlanet(planetKey) {
       const data = db[currentLang][planetKey];
       if (!data) return;
+
 
       document.getElementById('panel-title').innerText = data.name;
       document.getElementById('panel-temp').innerText = data.temp;
@@ -304,8 +320,13 @@
 
     function setLang(lang) {
       currentLang = lang;
+      
+      if (subtitleText) {
+        subtitleText.innerText = lang === 'fr' ? "– Choisissez votre planète" : "– Choose your planet";
+      }
+
       if(lang === 'fr') {
-        langFr.classList.replace('bg-slate-600', 'bg-slate-600'); // garde la couleur
+        langFr.classList.replace('bg-slate-600', 'bg-slate-600'); 
         langFr.classList.add('text-white', 'bg-slate-600');
         langFr.classList.remove('text-slate-400');
         
@@ -318,7 +339,7 @@
         langFr.classList.remove('bg-slate-600', 'text-white');
         langFr.classList.add('text-slate-400');
       }
-      // Refresh panel if open (pour mettre à jour les textes et le lien)
+
       panel.classList.add('translate-x-full');
     }
 
