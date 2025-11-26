@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="SolarEstateHub - Explorez et découvrez les planètes du système solaire" />
   <title>SolarEstateHub - Courtage Interstellaire</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
@@ -15,11 +16,20 @@
       --glass-border: rgba(255, 255, 255, 0.1);
     }
 
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       font-family: 'Rajdhani', sans-serif;
       background-color: #050b14;
       overflow: hidden;
-      touch-action: none; /* Empêche le scroll élastique sur mobile */
+      touch-action: pan-x pan-y;
+    }
+
+    /* Classe hidden manquante */
+    .hidden {
+      display: none !important;
     }
 
     /* Génération des étoiles via CSS */
@@ -45,38 +55,52 @@
       100% { transform: translateY(-200px); }
     }
 
-    /* Styles des Planètes (CSS Pur - Pas d'images) */
+    /* Styles des Planètes */
     .planet-body {
       border-radius: 50%;
       box-shadow: inset -4px -4px 10px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.1);
       position: relative;
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27);
       cursor: pointer;
-      /* Zone de clic agrandie pour mobile */
-    }
-    .planet-body::after {
-        content: '';
-        position: absolute;
-        top: -10px; bottom: -10px; left: -10px; right: -10px;
-        border-radius: 50%;
+      will-change: transform;
+      /* Zone de clic agrandie */
+      padding: 8px;
+      margin: -8px;
     }
 
-    .planet-body:hover, .planet-body:active { transform: scale(1.25); z-index: 50; box-shadow: 0 0 25px var(--neon-blue); }
+    .planet-body:hover, .planet-body:active { 
+      transform: scale(1.25); 
+      z-index: 50 !important; 
+      box-shadow: 0 0 25px var(--neon-blue);
+    }
     
     /* Textures CSS */
     .p-mercury { background: radial-gradient(circle at 30% 30%, #a1a1a1, #4a4a4a); }
     .p-venus { background: radial-gradient(circle at 30% 30%, #eecda3, #d49e58); }
     .p-earth { background: radial-gradient(circle at 30% 30%, #4facfe, #00f2fe 20%, #123668 80%); overflow: hidden; }
     .p-mars { background: radial-gradient(circle at 30% 30%, #ff6b6b, #8a1c1c); }
-    .p-jupiter { background: linear-gradient(180deg, #d4a373 0%, #e9c46a 20%, #d4a373 40%, #bc6c25 60%, #d4a373 100%); transform: rotate(-15deg); }
+    .p-jupiter { background: linear-gradient(180deg, #d4a373 0%, #e9c46a 20%, #d4a373 40%, #bc6c25 60%, #d4a373 100%); }
     .p-saturn { background: #f4e4ba; position: relative; }
-    /* Anneaux de Saturne simplifiés pour le scaling */
-    .p-saturn::before {
-      content: ''; position: absolute; top: 50%; left: 50%; width: 160%; height: 40%;
-      border: 4px solid rgba(210, 180, 140, 0.6); border-radius: 50%;
-      transform: translate(-50%, -50%) rotate(-20deg); pointer-events: none;
-      box-shadow: 0 0 0 2px rgba(100, 80, 60, 0.2);
+    
+    /* Anneaux de Saturne - correction pour éviter déformation au hover */
+    .saturn-container {
+      position: relative;
+      display: inline-block;
     }
+    .saturn-rings {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200%;
+      height: 80%;
+      border: 3px solid rgba(210, 180, 140, 0.6);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) rotate(-20deg);
+      pointer-events: none;
+      box-shadow: 0 0 0 2px rgba(100, 80, 60, 0.2);
+      z-index: -1;
+    }
+    
     .p-uranus { background: radial-gradient(circle at 30% 30%, #a2d9ff, #3b82f6); }
     .p-neptune { background: radial-gradient(circle at 30% 30%, #4c6ef5, #1c3d9c); }
     .p-sun { 
@@ -88,6 +112,11 @@
     @keyframes pulseSun {
       0%, 100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.05); opacity: 0.9; }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
     }
 
     /* Orbites */
@@ -106,45 +135,90 @@
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
 
+    /* Panel avec semi-transparence sur mobile */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* Overlay pour fermeture du panel sur mobile */
+    .panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 40;
+    }
+    .panel-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     /* Light Mode Overrides */
     body.light-mode { background-color: #f1f5f9; color: #1e293b; }
-    body.light-mode .stars { background-image: radial-gradient(2px 2px at 20px 30px, #cbd5e1, rgba(0,0,0,0)); }
-    body.light-mode .glass-panel { background: rgba(255, 255, 255, 0.9); border-color: rgba(0,0,0,0.1); color: #0f172a; }
+    body.light-mode .stars { opacity: 0.15; }
+    body.light-mode .glass-panel { 
+      background: rgba(255, 255, 255, 0.98); 
+      border-color: rgba(0,0,0,0.1); 
+      color: #0f172a; 
+    }
     body.light-mode .orbit-path { border-color: rgba(0,0,0,0.1); }
+    body.light-mode .panel-overlay { background: rgba(255, 255, 255, 0.7); }
+
+    /* Amélioration accessibilité */
+    button:focus-visible, a:focus-visible {
+      outline: 2px solid var(--neon-blue);
+      outline-offset: 2px;
+    }
+
+    /* Responsive title */
+    @media (max-width: 640px) {
+      .title-container {
+        top: 4.5rem !important;
+        right: 1rem !important;
+      }
+    }
   </style>
 </head>
 <body class="text-white h-screen w-screen flex flex-col overflow-hidden selection:bg-cyan-500 selection:text-black">
 
   <div class="stars"></div>
 
-  <!-- Floating UI Controls (Boutons en haut à droite) -->
+  <!-- Floating UI Controls -->
   <div class="absolute top-4 right-4 z-40 flex gap-2 pointer-events-auto">
     <div class="flex bg-slate-900/80 backdrop-blur rounded-full p-1 border border-slate-700 shadow-lg">
-      <button id="lang-fr" class="w-8 h-8 rounded-full bg-slate-600 text-white text-xs hover:bg-cyan-600 transition font-bold">FR</button>
-      <button id="lang-en" class="w-8 h-8 rounded-full text-slate-400 text-xs hover:text-white transition font-bold">EN</button>
+      <button id="lang-fr" class="w-8 h-8 rounded-full bg-cyan-600 text-white text-xs hover:bg-cyan-500 transition font-bold" aria-label="Français">FR</button>
+      <button id="lang-en" class="w-8 h-8 rounded-full text-slate-400 text-xs hover:text-white transition font-bold" aria-label="English">EN</button>
     </div>
     
-    <button id="theme-toggle" class="w-10 h-10 rounded-full border border-slate-700 bg-slate-900/80 backdrop-blur hover:bg-slate-700 flex items-center justify-center transition text-yellow-400 shadow-lg">
+    <button id="theme-toggle" class="w-10 h-10 rounded-full border border-slate-700 bg-slate-900/80 backdrop-blur hover:bg-slate-700 flex items-center justify-center transition text-yellow-400 shadow-lg" aria-label="Changer de thème">
       ☀
     </button>
   </div>
 
-  <!-- Titre (Déplacé sous les boutons, aligné à droite) -->
-  <div class="absolute top-20 right-4 z-40 pointer-events-none text-right">
-    <h1 class="text-lg md:text-xl font-bold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 drop-shadow-lg">
+  <!-- Titre -->
+  <div class="title-container absolute top-20 right-4 z-40 pointer-events-none text-right">
+    <h1 class="text-base sm:text-lg md:text-xl font-bold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 drop-shadow-lg">
       SolarEstate<span class="font-light text-white">Hub</span>
-      <span id="subtitle-text" class="text-xs md:text-sm text-slate-300 font-normal normal-case tracking-normal block md:inline md:ml-2">– Choisissez votre planète</span>
     </h1>
+    <span id="subtitle-text" class="text-xs md:text-sm text-slate-300 font-normal normal-case tracking-normal block mt-1">– Choisissez votre planète</span>
   </div>
 
   <!-- Main Content Area -->
   <main class="flex-1 relative flex overflow-hidden">
     
+    <!-- Overlay pour fermer le panel sur mobile -->
+    <div id="panel-overlay" class="panel-overlay md:hidden"></div>
+
     <!-- Solar System Map Area -->
     <div id="solar-system-container" class="flex-1 relative flex items-center justify-center w-full h-full">
       
-      <!-- HUD Coordinates (Bottom Left on mobile, Top Left under logo on desktop) -->
-      <div class="absolute bottom-4 left-4 md:top-12 md:left-4 z-10 pointer-events-none opacity-60">
+      <!-- HUD Coordinates -->
+      <div class="absolute bottom-4 left-4 md:top-16 md:left-4 z-10 pointer-events-none opacity-60">
         <div class="text-[10px] text-cyan-500 font-mono mb-1">COORDINATES</div>
         <div id="coords" class="text-xs md:text-sm font-mono text-white">X: 0.00 Y: 0.00</div>
       </div>
@@ -154,43 +228,94 @@
         <span class="text-[10px] text-slate-500 font-mono opacity-70">by Alex Koncept</span>
       </div>
 
-      <!-- The System (Responsive Container) -->
-      <!-- Utilisation de vmin pour s'adapter à l'orientation portrait ou paysage -->
+      <!-- The System -->
       <div class="relative w-[95vmin] h-[95vmin] md:w-[85vmin] md:h-[85vmin] max-w-[800px] max-h-[800px] flex items-center justify-center transition-transform duration-500 select-none" id="galaxy-wrapper">
         
-        <!-- Orbites (En pourcentage pour le responsive) -->
-        <div class="orbit-path w-[22%] h-[22%]"></div> <!-- Mercure -->
-        <div class="orbit-path w-[32%] h-[32%]"></div> <!-- Venus -->
-        <div class="orbit-path w-[45%] h-[45%]"></div> <!-- Terre -->
-        <div class="orbit-path w-[57%] h-[57%]"></div> <!-- Mars -->
-        <div class="orbit-path w-[75%] h-[75%]"></div> <!-- Jupiter -->
-        <div class="orbit-path w-[93%] h-[93%]"></div> <!-- Saturne -->
+        <!-- Orbites -->
+        <div class="orbit-path" style="width: 22%; height: 22%;"></div>
+        <div class="orbit-path" style="width: 32%; height: 32%;"></div>
+        <div class="orbit-path" style="width: 45%; height: 45%;"></div>
+        <div class="orbit-path" style="width: 57%; height: 57%;"></div>
+        <div class="orbit-path" style="width: 75%; height: 75%;"></div>
+        <div class="orbit-path" style="width: 93%; height: 93%;"></div>
         
         <!-- Soleil -->
-        <div class="absolute z-20 w-[12%] h-[12%] rounded-full p-sun cursor-pointer hover:scale-105 transition" onclick="selectPlanet('sun')"></div>
+        <div class="absolute z-20 rounded-full p-sun cursor-pointer" 
+             style="width: 12%; height: 12%; top: 44%; left: 44%;" 
+             onclick="selectPlanet('sun')"
+             role="button"
+             tabindex="0"
+             aria-label="Soleil"></div>
 
-        <!-- Planètes -->
-        <!-- Tailles fixes en rem/px pour rester cliquable sur mobile, positions en % -->
-        
-        <div class="absolute w-6 h-6 md:w-8 md:h-8 planet-body p-mercury z-30" style="top: 42%; left: 42%;" onclick="selectPlanet('mercury')"></div>
-        <div class="absolute w-8 h-8 md:w-10 md:h-10 planet-body p-venus z-30" style="top: 35%; left: 55%;" onclick="selectPlanet('venus')"></div>
-        <div class="absolute w-9 h-9 md:w-11 md:h-11 planet-body p-earth z-30" style="top: 65%; left: 60%;" onclick="selectPlanet('earth')"></div>
-        <div class="absolute w-7 h-7 md:w-9 md:h-9 planet-body p-mars z-30" style="top: 25%; left: 35%;" onclick="selectPlanet('mars')"></div>
-        <div class="absolute w-14 h-14 md:w-20 md:h-20 planet-body p-jupiter z-30" style="top: 10%; left: 70%;" onclick="selectPlanet('jupiter')"></div>
-        <div class="absolute w-12 h-12 md:w-16 md:h-16 planet-body p-saturn z-30" style="top: 80%; left: 20%;" onclick="selectPlanet('saturn')"></div>
-        <div class="absolute w-10 h-10 md:w-12 md:h-12 planet-body p-uranus z-30" style="top: 10%; left: 15%;" onclick="selectPlanet('uranus')"></div>
-        <div class="absolute w-10 h-10 md:w-12 md:h-12 planet-body p-neptune z-30" style="top: 85%; left: 80%;" onclick="selectPlanet('neptune')"></div>
+        <!-- Planètes avec positionnement amélioré -->
+        <div class="absolute planet-body p-mercury z-30" 
+             style="width: 2.5%; height: 2.5%; min-width: 24px; min-height: 24px; top: 39%; left: 39%;" 
+             onclick="selectPlanet('mercury')"
+             role="button"
+             tabindex="0"
+             aria-label="Mercure"></div>
+             
+        <div class="absolute planet-body p-venus z-30" 
+             style="width: 3%; height: 3%; min-width: 28px; min-height: 28px; top: 34%; left: 53%;" 
+             onclick="selectPlanet('venus')"
+             role="button"
+             tabindex="0"
+             aria-label="Vénus"></div>
+             
+        <div class="absolute planet-body p-earth z-30" 
+             style="width: 3.5%; height: 3.5%; min-width: 32px; min-height: 32px; top: 63%; left: 58%;" 
+             onclick="selectPlanet('earth')"
+             role="button"
+             tabindex="0"
+             aria-label="Terre"></div>
+             
+        <div class="absolute planet-body p-mars z-30" 
+             style="width: 2.8%; height: 2.8%; min-width: 26px; min-height: 26px; top: 24%; left: 33%;" 
+             onclick="selectPlanet('mars')"
+             role="button"
+             tabindex="0"
+             aria-label="Mars"></div>
+             
+        <div class="absolute planet-body p-jupiter z-30" 
+             style="width: 6%; height: 6%; min-width: 56px; min-height: 56px; top: 9%; left: 68%;" 
+             onclick="selectPlanet('jupiter')"
+             role="button"
+             tabindex="0"
+             aria-label="Jupiter"></div>
+             
+        <div class="absolute saturn-container z-30" 
+             style="width: 5%; height: 5%; min-width: 48px; min-height: 48px; top: 78%; left: 18%;" 
+             onclick="selectPlanet('saturn')"
+             role="button"
+             tabindex="0"
+             aria-label="Saturne">
+          <div class="planet-body p-saturn w-full h-full"></div>
+          <div class="saturn-rings"></div>
+        </div>
+             
+        <div class="absolute planet-body p-uranus z-30" 
+             style="width: 4%; height: 4%; min-width: 38px; min-height: 38px; top: 8%; left: 12%;" 
+             onclick="selectPlanet('uranus')"
+             role="button"
+             tabindex="0"
+             aria-label="Uranus"></div>
+             
+        <div class="absolute planet-body p-neptune z-30" 
+             style="width: 4%; height: 4%; min-width: 38px; min-height: 38px; top: 84%; left: 79%;" 
+             onclick="selectPlanet('neptune')"
+             role="button"
+             tabindex="0"
+             aria-label="Neptune"></div>
 
       </div>
     </div>
 
-    <!-- Info Panel (Sidebar responsive) -->
-    <!-- Sur mobile : w-full. Sur desktop : w-96 -->
-    <aside id="info-panel" class="glass-panel bg-slate-900/95 backdrop-blur-xl border-l border-slate-700 absolute right-0 top-0 h-full w-full md:w-96 transform translate-x-full transition-transform duration-300 z-50 flex flex-col shadow-2xl">
+    <!-- Info Panel -->
+    <aside id="info-panel" class="glass-panel border-l border-slate-700 absolute right-0 top-0 h-full w-full md:w-96 transform translate-x-full transition-transform duration-300 z-50 flex flex-col shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="panel-title">
       <div class="p-6 flex-1 overflow-y-auto">
         <div class="flex justify-between items-start mb-6">
-          <h2 id="panel-title" class="text-3xl font-bold font-mono uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">PLANÈTE</h2>
-          <button id="close-panel" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-red-500/20 transition">✕</button>
+          <h2 id="panel-title" class="text-2xl md:text-3xl font-bold font-mono uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">PLANÈTE</h2>
+          <button id="close-panel" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-red-500/20 transition" aria-label="Fermer">✕</button>
         </div>
 
         <div id="planet-visual" class="w-full h-40 rounded-lg mb-6 flex items-center justify-center bg-slate-800/50 border border-slate-700 relative overflow-hidden">
@@ -199,8 +324,6 @@
         </div>
 
         <div class="space-y-4">
-          <!-- Section Prix Supprimée -->
-
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-slate-800/30 p-3 rounded border border-slate-700">
               <p class="text-[10px] text-slate-500 uppercase">Température</p>
@@ -219,16 +342,14 @@
 
           <div class="mt-4">
             <p class="text-xs text-slate-400 uppercase tracking-wider mb-2">Opportunités</p>
-            <ul id="panel-features" class="text-sm space-y-2">
-              <!-- Features list -->
-            </ul>
+            <ul id="panel-features" class="text-sm space-y-2"></ul>
           </div>
         </div>
       </div>
 
-      <div class="p-6 border-t border-slate-800 bg-slate-900 pb-8 md:pb-6">
-        <a id="acquire-link" href="#" target="_blank" class="w-full py-4 md:py-3 bg-gradient-to-r from-cyan-600 to-blue-600 rounded font-bold hover:from-cyan-500 hover:to-blue-500 transition shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2 active:scale-95 transform duration-100 text-white no-underline">
-          <span>Voir les disponibilités</span>
+      <div class="p-6 border-t border-slate-800 bg-slate-900/50 pb-8 md:pb-6">
+        <a id="acquire-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-4 md:py-3 bg-gradient-to-r from-cyan-600 to-blue-600 rounded font-bold hover:from-cyan-500 hover:to-blue-500 transition shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2 active:scale-95 transform duration-100 text-white no-underline">
+          <span id="acquire-text">Voir les disponibilités</span>
         </a>
       </div>
     </aside>
@@ -236,7 +357,6 @@
   </main>
 
   <script>
-
     const db = {
       fr: {
         sun: { name: "Le Soleil", temp: "5,505°C", gravity: "274 m/s²", desc: "La source d'énergie ultime. Parfait pour une Sphère de Dyson. Attention aux coups de soleil.", type: "p-sun", features: ["Énergie infinie", "Vue centrale", "Chauffage inclus"], link: "https://fr.wikipedia.org/wiki/Soleil" },
@@ -253,7 +373,7 @@
         sun: { name: "The Sun", temp: "9,941°F", gravity: "27.9g", desc: "Ultimate energy source. Perfect for a Dyson Sphere project. Sunscreen SPF 5000 required.", type: "p-sun", features: ["Infinite Energy", "Central View", "Heating Included"], link: "https://en.wikipedia.org/wiki/Sun" },
         mercury: { name: "Mercury", temp: "333°F", gravity: "0.38g", desc: "Prime mining real estate. Ideal solar proximity for high-yield photovoltaic plants.", type: "p-mercury", features: ["Metal Rich", "Short Year", "No Atmosphere"], link: "https://alexkoncept.github.io/solarestatehub/mercure.html" },
         venus: { name: "Venus", temp: "867°F", gravity: "0.9g", desc: "Dense atmosphere, perfect for floating cloud cities. The ultimate challenge for bold architects.", type: "p-venus", features: ["Cloudy Views", "Natural UV Shield", "Geothermal Power"], link: "https://alexkoncept.github.io/solarestatehub/venus.html" },
-        earth: { name: "Earth", temp: "59°F", gravity: "1g", desc: "Cradle of humanity. Saturated market, high taxes, but unbeatable living conditions.", type: "p-earth", features: ["Liquid Water", "Native Oxygen", "Biodiversity"], link: "https://alexkoncept.github.io/solarestatehub/terre.html" },
+        earth: { name: "Earth", temp: "59°F", gravity: "1g", desc: "Cradle of humanity. Saturated market, but unbeatable living conditions.", type: "p-earth", features: ["Liquid Water", "Native Oxygen", "Biodiversity"], link: "https://alexkoncept.github.io/solarestatehub/terre.html" },
         mars: { name: "Mars", temp: "-76°F", gravity: "0.38g", desc: "The new frontier. Ideal for startups and pioneer colonies. Red soil rich in iron oxide.", type: "p-mars", features: ["Terraforming Potential", "Olympus Mons", "Two Moons"], link: "https://alexkoncept.github.io/solarestatehub/mars.html" },
         jupiter: { name: "Jupiter", temp: "-166°F", gravity: "2.4g", desc: "Gas giant. No solid ground, but orbital stations with a view of the Great Red Spot.", type: "p-jupiter", features: ["Asteroid Shield", "79+ Moons", "Hydrogen Abundant"], link: "https://alexkoncept.github.io/solarestatehub/jupiter.html" },
         saturn: { name: "Saturn", temp: "-220°F", gravity: "1.1g", desc: "The jewel of the system. Own the galaxy's most famous rings. Luxury tourism guaranteed.", type: "p-saturn", features: ["Spectacular Rings", "Diamond Rain", "Titan Nearby"], link: "https://alexkoncept.github.io/solarestatehub/saturne.html" },
@@ -266,19 +386,19 @@
     let currentTheme = 'dark';
 
     const panel = document.getElementById('info-panel');
+    const panelOverlay = document.getElementById('panel-overlay');
     const closePanelBtn = document.getElementById('close-panel');
     const themeToggle = document.getElementById('theme-toggle');
     const langFr = document.getElementById('lang-fr');
     const langEn = document.getElementById('lang-en');
     const coordsDisplay = document.getElementById('coords');
     const acquireLink = document.getElementById('acquire-link');
+    const acquireText = document.getElementById('acquire-text');
     const subtitleText = document.getElementById('subtitle-text');
-
 
     function selectPlanet(planetKey) {
       const data = db[currentLang][planetKey];
       if (!data) return;
-
 
       document.getElementById('panel-title').innerText = data.name;
       document.getElementById('panel-temp').innerText = data.temp;
@@ -287,6 +407,7 @@
 
       acquireLink.href = data.link;
 
+      // Afficher/masquer le bouton selon le corps céleste
       if (planetKey === 'sun') {
         acquireLink.classList.add('hidden');
       } else {
@@ -305,69 +426,104 @@
         featureList.appendChild(li);
       });
 
+      // Ouvrir le panel
       panel.classList.remove('translate-x-full');
+      panelOverlay.classList.add('active');
     }
 
-    closePanelBtn.addEventListener('click', () => {
+    function closePanel() {
       panel.classList.add('translate-x-full');
+      panelOverlay.classList.remove('active');
+    }
+
+    closePanelBtn.addEventListener('click', closePanel);
+    panelOverlay.addEventListener('click', closePanel);
+
+    // Support clavier pour fermer
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !panel.classList.contains('translate-x-full')) {
+        closePanel();
+      }
     });
 
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('light-mode');
       currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
       themeToggle.innerText = currentTheme === 'light' ? '🌙' : '☀';
+      themeToggle.setAttribute('aria-label', currentTheme === 'light' ? 'Mode sombre' : 'Mode clair');
     });
 
     function setLang(lang) {
       currentLang = lang;
       
+      // Mise à jour du sous-titre
       if (subtitleText) {
         subtitleText.innerText = lang === 'fr' ? "– Choisissez votre planète" : "– Choose your planet";
       }
 
-      if(lang === 'fr') {
-        langFr.classList.replace('bg-slate-600', 'bg-slate-600'); 
-        langFr.classList.add('text-white', 'bg-slate-600');
+      // Mise à jour du texte du bouton
+      if (acquireText) {
+        acquireText.innerText = lang === 'fr' ? "Voir les disponibilités" : "View availability";
+      }
+
+      // Mise à jour des boutons de langue
+      if (lang === 'fr') {
+        langFr.classList.add('bg-cyan-600', 'text-white');
         langFr.classList.remove('text-slate-400');
         
-        langEn.classList.remove('bg-slate-600', 'text-white');
+        langEn.classList.remove('bg-cyan-600', 'text-white');
         langEn.classList.add('text-slate-400');
       } else {
-        langEn.classList.add('bg-slate-600', 'text-white');
+        langEn.classList.add('bg-cyan-600', 'text-white');
         langEn.classList.remove('text-slate-400');
         
-        langFr.classList.remove('bg-slate-600', 'text-white');
+        langFr.classList.remove('bg-cyan-600', 'text-white');
         langFr.classList.add('text-slate-400');
       }
 
-      panel.classList.add('translate-x-full');
+      // Fermer le panel lors du changement de langue
+      closePanel();
     }
 
     langFr.addEventListener('click', () => setLang('fr'));
     langEn.addEventListener('click', () => setLang('en'));
 
+    // Gestion des coordonnées (souris + tactile)
+    function updateCoords(x, y) {
+      const xNorm = (x / window.innerWidth).toFixed(2);
+      const yNorm = (y / window.innerHeight).toFixed(2);
+      coordsDisplay.innerText = `X: ${xNorm} Y: ${yNorm}`;
+    }
+
     document.addEventListener('mousemove', (e) => {
-      const x = (e.clientX / window.innerWidth).toFixed(2);
-      const y = (e.clientY / window.innerHeight).toFixed(2);
-      coordsDisplay.innerText = `X: ${x} Y: ${y}`;
+      updateCoords(e.clientX, e.clientY);
     });
 
-    setLang('fr');
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) {
+        updateCoords(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    });
 
+    // Support clavier pour les planètes
+    document.querySelectorAll('[role="button"]').forEach(el => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          el.click();
+        }
+      });
+    });
+
+    // Animation float pour les planètes
     document.querySelectorAll('.planet-body').forEach(el => {
       const delay = Math.random() * 2;
-      el.style.animation = `float ${3 + Math.random()}s ease-in-out infinite ${delay}s`;
+      const duration = 3 + Math.random();
+      el.style.animation = `float ${duration}s ease-in-out infinite ${delay}s`;
     });
 
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = `
-      @keyframes float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-5px); }
-      }
-    `;
-    document.head.appendChild(styleSheet);
-
+    // Initialisation
+    setLang('fr');
   </script>
 </body>
 </html>
